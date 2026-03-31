@@ -1090,7 +1090,7 @@ fn todo_store_path() -> Result<std::path::PathBuf, String> {
 }
 
 fn resolve_skill_path(skill: &str) -> Result<std::path::PathBuf, String> {
-    let requested = skill.trim().trim_start_matches('/');
+    let requested = skill.trim().trim_start_matches('/').trim_start_matches('$');
     if requested.is_empty() {
         return Err(String::from("skill must not be empty"));
     }
@@ -1961,6 +1961,21 @@ mod tests {
             .as_str()
             .expect("prompt")
             .contains("Guide on using oh-my-codex plugin"));
+
+        let dollar_result = execute_tool(
+            "Skill",
+            &json!({
+                "skill": "$help"
+            }),
+        )
+        .expect("Skill should accept $skill invocation form");
+        let dollar_output: serde_json::Value =
+            serde_json::from_str(&dollar_result).expect("valid json");
+        assert_eq!(dollar_output["skill"], "$help");
+        assert!(dollar_output["path"]
+            .as_str()
+            .expect("path")
+            .ends_with("/help/SKILL.md"));
     }
 
     #[test]
