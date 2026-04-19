@@ -23,6 +23,8 @@ use std::sync::{Arc, Mutex};
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant, UNIX_EPOCH};
 
+use crossterm::style::{Color, Stylize};
+
 use api::{
     detect_provider_kind, resolve_startup_auth_source, AnthropicClient, AuthSource,
     ContentBlockDelta, InputContentBlock, InputMessage, MessageRequest, MessageResponse,
@@ -7874,12 +7876,28 @@ fn render_thinking_block_summary(
     char_count: Option<usize>,
     redacted: bool,
 ) -> Result<(), RuntimeError> {
+    let renderer = TerminalRenderer::new();
+    let theme = renderer.color_theme();
+    
     let summary = if redacted {
-        "\n▶ Thinking block hidden by provider\n".to_string()
+        format!(
+            "\n{}Thinking block hidden by provider{}\n",
+            format!("▶").with(Color::DarkGrey),
+            format!("---").with(Color::DarkGrey)
+        )
     } else if let Some(char_count) = char_count {
-        format!("\n▶ Thinking ({char_count} chars hidden)\n")
+        format!(
+            "\n{}Thinking ({} chars hidden){}\n",
+            format!("▶").with(Color::DarkGrey),
+            char_count,
+            format!("---").with(Color::DarkGrey)
+        )
     } else {
-        "\n▶ Thinking hidden\n".to_string()
+        format!(
+            "\n{}Thinking hidden{}\n",
+            format!("▶").with(Color::DarkGrey),
+            format!("---").with(Color::DarkGrey)
+        )
     };
     write!(out, "{summary}")
         .and_then(|()| out.flush())

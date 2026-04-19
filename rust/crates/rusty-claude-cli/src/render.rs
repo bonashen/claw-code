@@ -88,9 +88,8 @@ impl Spinner {
         execute!(
             out,
             MoveToColumn(0),
-            Clear(ClearType::CurrentLine),
             SetForegroundColor(theme.spinner_done),
-            Print(format!("✔ {label}\n")),
+            Print(format!("\n✔ {label}\n")),
             ResetColor
         )?;
         out.flush()
@@ -106,9 +105,8 @@ impl Spinner {
         execute!(
             out,
             MoveToColumn(0),
-            Clear(ClearType::CurrentLine),
             SetForegroundColor(theme.spinner_failed),
-            Print(format!("✘ {label}\n")),
+            Print(format!("\n✘ {label}\n")),
             ResetColor
         )?;
         out.flush()
