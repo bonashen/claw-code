@@ -3257,7 +3257,10 @@ fn skill_lookup_roots() -> Vec<SkillLookupRoot> {
     if let Ok(codex_home) = std::env::var("CODEX_HOME") {
         push_prefixed_skill_lookup_roots(&mut roots, std::path::Path::new(&codex_home));
     }
-    if let Ok(home) = std::env::var("HOME").or_else(|_| std::env::var("USERPROFILE")) {
+    if let Some(home) = std::env::var_os("HOME")
+        .filter(|h| !h.is_empty())
+        .or_else(|| std::env::var_os("USERPROFILE"))
+    {
         push_home_skill_lookup_roots(&mut roots, std::path::Path::new(&home));
     }
     if let Ok(claude_config_dir) = std::env::var("CLAUDE_CONFIG_DIR") {
@@ -5737,9 +5740,10 @@ fn config_home_dir() -> Result<PathBuf, String> {
     if let Ok(path) = std::env::var("CLAW_CONFIG_HOME") {
         return Ok(PathBuf::from(path));
     }
-    let home = std::env::var("HOME")
-        .or_else(|_| std::env::var("USERPROFILE"))
-        .map_err(|_| {
+    let home = std::env::var_os("HOME")
+        .filter(|h| !h.is_empty())
+        .or_else(|| std::env::var_os("USERPROFILE"))
+        .ok_or_else(|| {
             String::from(
                 "HOME is not set (on Windows, set USERPROFILE or HOME, \
                  or use CLAW_CONFIG_HOME to point directly at the config directory)",
