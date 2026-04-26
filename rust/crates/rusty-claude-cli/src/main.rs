@@ -412,6 +412,12 @@ fn parse_args(args: &[String]) -> Result<CliAction, String> {
     let mut rest: Vec<String> = Vec::new();
     let mut index = 0;
 
+    if model == DEFAULT_MODEL {
+        if let Some(config_model) = config_model_for_current_dir() {
+            model = resolve_model_alias_with_config(&config_model);
+        }
+    }
+
     while index < args.len() {
         match args[index].as_str() {
             "--help" | "-h" if rest.is_empty() => {
@@ -6639,6 +6645,10 @@ fn build_runtime_with_plugin_state(
     plugin_registry.initialize()?;
     let policy = permission_policy(permission_mode, &feature_config, &tool_registry)
         .map_err(std::io::Error::other)?;
+    for (key, value) in &feature_config.env {
+        std::env::set_var(key, value);
+    }
+    runtime::set_extra_env(feature_config.env.clone());
     let mut runtime = ConversationRuntime::new_with_features(
         session,
         AnthropicRuntimeClient::new(
@@ -6655,6 +6665,7 @@ fn build_runtime_with_plugin_state(
             emit_output,
             tool_registry.clone(),
             mcp_state.clone(),
+            feature_config.env.clone(),
         ),
         policy,
         system_prompt,
@@ -8015,7 +8026,9 @@ impl CliToolExecutor {
         emit_output: bool,
         tool_registry: GlobalToolRegistry,
         mcp_state: Option<Arc<Mutex<RuntimeMcpState>>>,
+        extra_env: std::collections::BTreeMap<String, String>,
     ) -> Self {
+        runtime::set_extra_env(extra_env);
         Self {
             renderer: TerminalRenderer::new(),
             emit_output,

@@ -3,6 +3,8 @@ use std::fmt::{Display, Formatter};
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use serde::{Deserialize, Serialize};
+
 use crate::json::JsonValue;
 use crate::sandbox::{FilesystemIsolationMode, SandboxConfig};
 
@@ -52,6 +54,7 @@ pub struct RuntimePluginConfig {
 }
 
 /// Structured feature configuration consumed by runtime subsystems.
+/// Structured feature configuration consumed by runtime subsystems.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct RuntimeFeatureConfig {
     hooks: RuntimeHookConfig,
@@ -65,6 +68,14 @@ pub struct RuntimeFeatureConfig {
     sandbox: SandboxConfig,
     provider_fallbacks: ProviderFallbackConfig,
     trusted_roots: Vec<String>,
+    pub env: BTreeMap<String, String>,
+}
+
+impl RuntimeFeatureConfig {
+    pub fn with_env(mut self, env: BTreeMap<String, String>) -> Self {
+        self.env = env;
+        self
+    }
 }
 
 /// Ordered chain of fallback model identifiers used when the primary
@@ -310,6 +321,7 @@ impl ConfigLoader {
             oauth: parse_optional_oauth_config(&merged_value, "merged settings.oauth")?,
             model: parse_optional_model(&merged_value),
             aliases: parse_optional_aliases(&merged_value)?,
+            env: parse_optional_env_config(&merged_value)?,
             permission_mode: parse_optional_permission_mode(&merged_value)?,
             permission_rules: parse_optional_permission_rules(&merged_value)?,
             sandbox: parse_optional_sandbox_config(&merged_value)?,
@@ -388,6 +400,11 @@ impl RuntimeConfig {
     #[must_use]
     pub fn aliases(&self) -> &BTreeMap<String, String> {
         &self.feature_config.aliases
+    }
+
+    #[must_use]
+    pub fn env(&self) -> &BTreeMap<String, String> {
+        &self.feature_config.env
     }
 
     #[must_use]
@@ -735,9 +752,16 @@ fn merge_mcp_servers(
 
 fn parse_optional_model(root: &JsonValue) -> Option<String> {
     root.as_object()
-        .and_then(|object| object.get("model"))
+.and_then(|object| object.get("model"))
         .and_then(JsonValue::as_str)
         .map(ToOwned::to_owned)
+    }
+
+fn parse_optional_env_config(root: &JsonValue) -> Result<BTreeMap<String, String>, ConfigError> {
+    let Some(object) = root.as_object() else {
+        return Ok(BTreeMap::new());
+    };
+    Ok(optional_string_map(object, "env", "merged settings")?.unwrap_or_default())
 }
 
 fn parse_optional_aliases(root: &JsonValue) -> Result<BTreeMap<String, String>, ConfigError> {

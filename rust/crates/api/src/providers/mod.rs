@@ -165,56 +165,26 @@ pub fn resolve_model_alias(model: &str) -> String {
 #[must_use]
 pub fn metadata_for_model(model: &str) -> Option<ProviderMetadata> {
     let canonical = resolve_model_alias(model);
-    if canonical.starts_with("claude") {
-        return Some(ProviderMetadata {
-            provider: ProviderKind::Anthropic,
-            auth_env: "ANTHROPIC_API_KEY",
-            base_url_env: "ANTHROPIC_BASE_URL",
-            default_base_url: anthropic::DEFAULT_BASE_URL,
-        });
-    }
-    if canonical.starts_with("grok") {
-        return Some(ProviderMetadata {
-            provider: ProviderKind::Xai,
-            auth_env: "XAI_API_KEY",
-            base_url_env: "XAI_BASE_URL",
-            default_base_url: openai_compat::DEFAULT_XAI_BASE_URL,
-        });
-    }
-    // Explicit provider-namespaced models (e.g. "openai/gpt-4.1-mini") must
-    // route to the correct provider regardless of which auth env vars are set.
-    // Without this, detect_provider_kind falls through to the auth-sniffer
-    // order and misroutes to Anthropic if ANTHROPIC_API_KEY is present.
-    if canonical.starts_with("openai/") || canonical.starts_with("gpt-") {
-        return Some(ProviderMetadata {
-            provider: ProviderKind::OpenAi,
-            auth_env: "OPENAI_API_KEY",
-            base_url_env: "OPENAI_BASE_URL",
-            default_base_url: openai_compat::DEFAULT_OPENAI_BASE_URL,
-        });
-    }
-    // Alibaba DashScope compatible-mode endpoint. Routes qwen/* and bare
-    // qwen-* model names (qwen-max, qwen-plus, qwen-turbo, qwen-qwq, etc.)
-    // to the OpenAI-compat client pointed at DashScope's /compatible-mode/v1.
-    // Uses the OpenAi provider kind because DashScope speaks the OpenAI REST
-    // shape — only the base URL and auth env var differ.
-    if canonical.starts_with("qwen/") || canonical.starts_with("qwen-") {
-        return Some(ProviderMetadata {
-            provider: ProviderKind::OpenAi,
-            auth_env: "DASHSCOPE_API_KEY",
-            base_url_env: "DASHSCOPE_BASE_URL",
-            default_base_url: openai_compat::DEFAULT_DASHSCOPE_BASE_URL,
-        });
-    }
-    // Kimi models (kimi-k2.5, kimi-k1.5, etc.) via DashScope compatible-mode.
-    // Routes kimi/* and kimi-* model names to DashScope endpoint.
-    if canonical.starts_with("kimi/") || canonical.starts_with("kimi-") {
-        return Some(ProviderMetadata {
-            provider: ProviderKind::OpenAi,
-            auth_env: "DASHSCOPE_API_KEY",
-            base_url_env: "DASHSCOPE_BASE_URL",
-            default_base_url: openai_compat::DEFAULT_DASHSCOPE_BASE_URL,
-        });
+
+    let routes = [
+        ("claude", ProviderKind::Anthropic, "ANTHROPIC_API_KEY", "ANTHROPIC_BASE_URL", anthropic::DEFAULT_BASE_URL),
+        ("grok", ProviderKind::Xai, "XAI_API_KEY", "XAI_BASE_URL", openai_compat::DEFAULT_XAI_BASE_URL),
+        ("openai/", ProviderKind::OpenAi, "OPENAI_API_KEY", "OPENAI_BASE_URL", openai_compat::DEFAULT_OPENAI_BASE_URL),
+        ("gpt-", ProviderKind::OpenAi, "OPENAI_API_KEY", "OPENAI_BASE_URL", openai_compat::DEFAULT_OPENAI_BASE_URL),
+        ("qwen", ProviderKind::OpenAi, "DASHSCOPE_API_KEY", "DASHSCOPE_BASE_URL", openai_compat::DEFAULT_DASHSCOPE_BASE_URL),
+        ("kimi", ProviderKind::OpenAi, "DASHSCOPE_API_KEY", "DASHSCOPE_BASE_URL", openai_compat::DEFAULT_DASHSCOPE_BASE_URL),
+        ("glm", ProviderKind::OpenAi, "OPENAI_API_KEY", "OPENAI_BASE_URL", openai_compat::DEFAULT_OPENAI_BASE_URL),
+    ];
+
+    for (prefix, provider, auth, base_env, default) in routes {
+        if canonical.starts_with(prefix) {
+            return Some(ProviderMetadata {
+                provider,
+                auth_env: auth,
+                base_url_env: base_env,
+                default_base_url: default,
+            });
+        }
     }
     None
 }

@@ -1,0 +1,85 @@
+{
+  "$schema": "https://raw.githubusercontent.com/ultraworkers/claw-code/main/schema/claw-settings.schema.json",
+  "model": "claude-sonnet-4-6",
+  "env": {
+    "ANTHROPIC_API_KEY": "sk-ant-...",
+    "OPENAI_API_KEY": "sk-..."
+  },
+  "permissionMode": "acceptEdits",
+  "permissions": {
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Write",
+      "Edit",
+      "Bash(npm *)",
+      "Bash(cargo *)"
+    ],
+    "deny": [
+      "Bash(rm -rf /)",
+      "Bash(sudo *)",
+      "Bash(curl *|sh)"
+    ],
+    "ask": [
+      "Edit",
+      "Write",
+      "Bash(git push)",
+      "Bash(rm -rf *)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [],
+    "PostToolUse": [],
+    "PostToolUseFailure": []
+  },
+  "sandbox": {
+    "enabled": false,
+    "namespaceRestrictions": false,
+    "networkIsolation": false,
+    "filesystemMode": "read-write",
+    "allowedMounts": ["/tmp", "/home"]
+  },
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/home"]
+    },
+    "brave-search": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-brave-search"],
+      "env": {
+        "BRAVE_API_KEY": "your-brave-api-key"
+      }
+    },
+    "remote-server": {
+      "url": "https://mcp.example.com/sse",
+      "headers": {
+        "Authorization": "Bearer token"
+      }
+    }
+  },
+  "plugins": {
+    "enabled": true,
+    "externalDirectories": [],
+    "installRoot": null,
+    "registryPath": null,
+    "bundledRoot": null,
+    "maxOutputTokens": 8192
+  },
+  "providerFallbacks": {
+    "primary": "claude-sonnet-4-6",
+    "fallbacks": ["claude-haiku-4-5-20251213", "gpt-4o"]
+  },
+  "aliases": {
+    "opus": "claude-opus-4-6",
+    "sonnet": "claude-sonnet-4-6",
+    "haiku": "claude-haiku-4-5-20251213",
+    "gpt4": "gpt-4o",
+    "gpt4o": "gpt-4o"
+  },
+  "trustedRoots": [
+    "/usr/local/bin",
+    "/home/.local/bin"
+  ]
+}

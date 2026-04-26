@@ -1,0 +1,2 @@
+{"created_at_ms":1777174808639,"model":"claude-haiku-4-5-20251213","session_id":"session-1777174808640-0","type":"session_meta","updated_at_ms":1777174808639,"version":1,"workspace_root":"D:\\projects\\claw-code\\rust"}
+{"message":{"blocks":[{"text":"printenv MY_TEST_VAR","type":"text"}],"role":"user"},"type":"message"}

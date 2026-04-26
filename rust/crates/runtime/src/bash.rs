@@ -1,7 +1,9 @@
 use std::env;
 use std::io;
 use std::process::{Command, Stdio};
+use std::sync::RwLock;
 use std::time::Duration;
+use std::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
 use tokio::process::Command as TokioCommand;
@@ -14,23 +16,39 @@ use crate::sandbox::{
 };
 use crate::ConfigLoader;
 
+thread_local! {
+    static EXTRA_ENV: RwLock<BTreeMap<String, String>> = const { RwLock::new(BTreeMap::new()) };
+}
+
+pub fn set_extra_env(env: BTreeMap<String, String>) {
+    EXTRA_ENV.with(|e| *e.write().unwrap() = env);
+}
+
+pub fn clear_extra_env() {
+    EXTRA_ENV.with(|e| e.write().unwrap().clear());
+}
+
+pub fn get_extra_env() -> BTreeMap<String, String> {
+    EXTRA_ENV.with(|e| e.read().unwrap().clone())
+}
+
 /// Input schema for the built-in bash execution tool.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct BashCommandInput {
     pub command: String,
     pub timeout: Option<u64>,
     pub description: Option<String>,
-    #[serde(rename = "run_in_background")]
+    #[serde(rename = "run_in_background", default)]
     pub run_in_background: Option<bool>,
-    #[serde(rename = "dangerouslyDisableSandbox")]
+    #[serde(rename = "dangerouslyDisableSandbox", default)]
     pub dangerously_disable_sandbox: Option<bool>,
-    #[serde(rename = "namespaceRestrictions")]
+    #[serde(rename = "namespaceRestrictions", default)]
     pub namespace_restrictions: Option<bool>,
-    #[serde(rename = "isolateNetwork")]
+    #[serde(rename = "isolateNetwork", default)]
     pub isolate_network: Option<bool>,
     #[serde(rename = "filesystemMode")]
     pub filesystem_mode: Option<FilesystemIsolationMode>,
-    #[serde(rename = "allowedMounts")]
+    #[serde(rename = "allowedMounts", default)]
     pub allowed_mounts: Option<Vec<String>>,
 }
 
@@ -48,13 +66,13 @@ pub struct BashCommandOutput {
     pub background_task_id: Option<String>,
     #[serde(rename = "backgroundedByUser")]
     pub backgrounded_by_user: Option<bool>,
-    #[serde(rename = "assistantAutoBackgrounded")]
+    #[serde(rename = "assistantAutoBackgrounded", default)]
     pub assistant_auto_backgrounded: Option<bool>,
     #[serde(rename = "dangerouslyDisableSandbox")]
     pub dangerously_disable_sandbox: Option<bool>,
     #[serde(rename = "returnCodeInterpretation")]
     pub return_code_interpretation: Option<String>,
-    #[serde(rename = "noOutputExpected")]
+    #[serde(rename = "noOutputExpected", default)]
     pub no_output_expected: Option<bool>,
     #[serde(rename = "structuredContent")]
     pub structured_content: Option<Vec<serde_json::Value>>,
@@ -188,6 +206,7 @@ fn prepare_command(
     sandbox_status: &SandboxStatus,
     create_dirs: bool,
 ) -> Command {
+    let extra_env = get_extra_env();
     if create_dirs {
         prepare_sandbox_dirs(cwd);
     }
@@ -196,6 +215,7 @@ fn prepare_command(
         let mut prepared = Command::new(launcher.program);
         prepared.args(launcher.args);
         prepared.current_dir(cwd);
+        prepared.envs(&extra_env);
         prepared.envs(launcher.env);
         return prepared;
     }
@@ -206,6 +226,7 @@ fn prepare_command(
         prepared.env("HOME", cwd.join(".sandbox-home"));
         prepared.env("TMPDIR", cwd.join(".sandbox-tmp"));
     }
+    prepared.envs(&extra_env);
     prepared
 }
 
@@ -215,6 +236,7 @@ fn prepare_tokio_command(
     sandbox_status: &SandboxStatus,
     create_dirs: bool,
 ) -> TokioCommand {
+    let extra_env = get_extra_env();
     if create_dirs {
         prepare_sandbox_dirs(cwd);
     }
@@ -223,6 +245,7 @@ fn prepare_tokio_command(
         let mut prepared = TokioCommand::new(launcher.program);
         prepared.args(launcher.args);
         prepared.current_dir(cwd);
+        prepared.envs(&extra_env);
         prepared.envs(launcher.env);
         return prepared;
     }
@@ -233,6 +256,7 @@ fn prepare_tokio_command(
         prepared.env("HOME", cwd.join(".sandbox-home"));
         prepared.env("TMPDIR", cwd.join(".sandbox-tmp"));
     }
+    prepared.envs(&extra_env);
     prepared
 }
 

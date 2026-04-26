@@ -1,0 +1,2 @@
+{"created_at_ms":1776565496128,"model":"glm-5","session_id":"session-1776565496129-0","type":"session_meta","updated_at_ms":1776565496128,"version":1,"workspace_root":"D:\\projects\\claw-code\\rust"}
+{"message":{"blocks":[{"text":"what is 1+1","type":"text"}],"role":"user"},"type":"message"}

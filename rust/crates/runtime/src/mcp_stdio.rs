@@ -1382,6 +1382,10 @@ pub fn spawn_mcp_stdio_process(bootstrap: &McpClientBootstrap) -> io::Result<Mcp
 }
 
 fn apply_env(command: &mut Command, env: &BTreeMap<String, String>) {
+    let extra_env = crate::bash::get_extra_env();
+    for (key, value) in extra_env {
+        command.env(key, value);
+    }
     for (key, value) in env {
         command.env(key, value);
     }

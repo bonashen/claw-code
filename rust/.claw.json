@@ -1,0 +1,12 @@
+{
+    "permissions":
+    {
+        "defaultMode": "dontAsk"
+    },
+    "model":"glm-5",
+    "env":{
+      "CLAW_TEST_VAR":"test_value_12345",
+      "OPENAI_API_KEY":"sk-ylb6QX1vrI6ZzcTcF8Ac973025054eD49b0b52F6346bF3Bb",
+      "OPENAI_BASE_URL":"http://one-api.v.csgjs.com/v1"
+    }
+}
