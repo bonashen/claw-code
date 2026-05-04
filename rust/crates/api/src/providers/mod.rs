@@ -259,6 +259,12 @@ pub fn model_token_limit(model: &str) -> Option<ModelTokenLimit> {
             max_output_tokens: 64_000,
             context_window_tokens: 131_072,
         }),
+        // GLM models via OpenAI-compatible API
+        // Source: https://open.bigmodel.cn/dev/guide/completion/glm-5
+        "glm-5" | "glm-4" => Some(ModelTokenLimit {
+            max_output_tokens: 64_000,
+            context_window_tokens: 131_072,
+        }),
         // Kimi models via DashScope (Moonshot AI)
         // Source: https://platform.moonshot.cn/docs/intro
         "kimi-k2.5" | "kimi-k1.5" => Some(ModelTokenLimit {

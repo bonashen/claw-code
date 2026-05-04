@@ -62,6 +62,8 @@ const DEFAULT_MODEL: &str = "claude-opus-4-6";
 fn max_tokens_for_model(model: &str) -> u32 {
     if model.contains("opus") {
         32_000
+    } else if model.contains("glm-4") || model.contains("glm-5") {
+        64_000
     } else {
         64_000
     }

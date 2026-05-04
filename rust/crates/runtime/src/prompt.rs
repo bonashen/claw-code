@@ -5,6 +5,7 @@ use std::process::Command;
 
 use crate::config::{ConfigError, ConfigLoader, RuntimeConfig};
 use crate::git_context::GitContext;
+use crate::skill_index;
 
 /// Errors raised while assembling the final system prompt.
 #[derive(Debug)]
@@ -156,6 +157,13 @@ impl SystemPromptBuilder {
             sections.push(render_project_context(project_context));
             if !project_context.instruction_files.is_empty() {
                 sections.push(render_instruction_files(&project_context.instruction_files));
+            }
+        }
+        if let Some(project_context) = &self.project_context {
+            let cwd = project_context.cwd.display().to_string();
+            let skill_prompt = skill_index::generate_skill_index_prompt(&cwd, 10);
+            if !skill_prompt.is_empty() {
+                sections.push(skill_prompt);
             }
         }
         if let Some(config) = &self.config {

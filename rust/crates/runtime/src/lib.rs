@@ -44,6 +44,7 @@ pub mod summary_compression;
 pub mod task_packet;
 pub mod task_registry;
 pub mod team_cron_registry;
+pub mod skill_index;
 #[cfg(test)]
 mod trust_resolver;
 mod usage;
@@ -170,6 +171,10 @@ pub use usage::{
 pub use worker_boot::{
     Worker, WorkerEvent, WorkerEventKind, WorkerEventPayload, WorkerFailure, WorkerFailureKind,
     WorkerPromptTarget, WorkerReadySnapshot, WorkerRegistry, WorkerStatus, WorkerTrustResolution,
+};
+pub use skill_index::{
+    generate_skill_index_prompt, get_skill_for_tool, get_skill_path_for_loading, init_skill_index,
+    SkillSummary,
 };
 
 #[cfg(test)]
